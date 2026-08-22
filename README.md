@@ -76,7 +76,7 @@ stealing from you.
 
 | | dashboard | pool fee |
 |---|---|---|
-| `--pool parano1d` *(default)* | http://185.189.45.186:3783 | 10% |
+| `--pool parano1d` *(default)* | https://parano1d-pool.fun | 10% |
 | `--pool ariapool` | https://pool.ariabrain.com/noid.html | 3% |
 
 Both accept your address as your login. The pool fee is charged by the pool and
