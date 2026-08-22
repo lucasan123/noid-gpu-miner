@@ -82,6 +82,12 @@ stealing from you.
 Both accept your address as your login. The pool fee is charged by the pool and
 is separate from the dev fee below.
 
+The Parano1d pool is reached through `parano1d-pool.fun`, with several fallback
+addresses behind it. That is deliberate: a pool that has to move should not
+break every miner already installed. If the miner loses the pool while running,
+after two minutes without work it goes looking for it again — you will see
+`pool moved: now mining on ...` — instead of hanging on a dead address.
+
 This build mines **only** on the pools in that list. To mine somewhere else, or
 against your own node, use the official `parano1d-miner`: this one is not the
 right tool for that and does not pretend to be.
