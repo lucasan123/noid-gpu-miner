@@ -26,9 +26,21 @@ number of cards in the rig. One process drives every card in the machine.
 
 ---
 
-## Quick start
+## Download
 
-Download from [Releases](../../releases), then:
+From [Releases](../../releases):
+
+| you have | take |
+|---|---|
+| Windows | `noid-gpu-1.0-windows-x64.zip` |
+| Linux | `noid-gpu-1.0-linux-x64.tar.gz` |
+| HiveOS | `noid-gpu-1.0.tar.gz` — paste its URL as the custom miner Installation URL |
+
+The bare `noid-gpu.exe` and `noid-gpu` are there too, for anyone who wants
+just the binary; the archives also carry the instructions, and a `.exe` inside
+a zip is far less likely to be blocked on its way to you.
+
+## Quick start
 
 **Windows**
 
