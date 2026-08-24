@@ -1,185 +1,132 @@
-# noid-gpu-miner
+# NOID-GPU 1.1.0
 
-**A GPU miner for Parano1d (NOID).** Windows, Linux, HiveOS.
+**Faster mining, less arithmetic per hash, and measured board power well
+below the configured limits.**
 
-Parano1d's proof of work is [documented as CPU-only](https://github.com/ignotusnemo/parano1d/discussions/12):
-after every block the node must build a fresh HistoryStep proof before there is
-anything to mine, and that proof is CPU work no GPU can do. That is true — and
-it is why a GPU cannot mine Parano1d *on its own*.
+NOID-GPU is an NVIDIA GPU miner for the Parano1d (NOID) Poseidon2b proof of
+work. Version 1.1.0 adds the optimized CUDA path, a compact English interface,
+a reduced 7.5% public miner fee, and separate Windows, Linux, and HiveOS
+packages.
 
-Behind a pool the limit disappears. The pool proves once, and every GPU attached
-to it searches nonces on the same template in parallel. The nonce search is
-Poseidon2b over GF(2^128), where CPUs have carryless multiplication in hardware
-and GPUs have to emulate it — so the advantage was not obvious in advance.
-Measured, it is real:
+## Release highlights
 
-| card | per card |
-|---|---|
-| RTX 5090 | 62 MH/s |
-| RTX 4090 | 42 MH/s |
-| RTX 5080 | 32 MH/s |
-| RTX 5070 Ti | 26 MH/s |
+- **RTX 5070 Ti:** controlled wall-rate increased from 34.566 to
+  **41.130 MH/s** (**+18.99%**).
+- **RTX 4090:** **70.492 MH/s at 280.14 W**, leaving 169.86 W of headroom
+  below the configured 450 W limit.
+- **RTX 5090:** **104.526 MH/s at 453.69 W**, leaving 46.31 W of headroom
+  below the configured 500 W limit.
+- Public miner developer fee reduced from 10% to **7.5%**.
+- Parano1d Pool fee changed from 10% to **7.5%**.
+- Normal startup is now a compact NOID-GPU-WORKER panel, with English
+  options, status messages, warnings, and errors.
 
-Those are the pool's own numbers — the `measured` column, computed from shares
-actually delivered, not from what the miner claims about itself — divided by the
-number of cards in the rig. One process drives every card in the machine.
+## Performance and power
 
----
+### Stabilized RTX 4090 and RTX 5090 measurements
 
-## Download
+| GPU | NOID-GPU wall rate | Measured board power | Configured power limit | Unused headroom | Measured efficiency |
+|---|---:|---:|---:|---:|---:|
+| RTX 4090 | **70.492 MH/s** | **280.14 W** | 450 W | **169.86 W (37.75%)** | **0.25163 MH/s/W** |
+| RTX 5090 | **104.526 MH/s** | **453.69 W** | 500 W | **46.31 W (9.26%)** | **0.23039 MH/s/W** |
 
-From [Releases](../../releases):
+The table uses the longer stabilized run so that board power and temperature
+had time to settle. The normal 16,777,216-nonce batch measured 70.314 MH/s on
+the RTX 4090 and 104.298 MH/s on the RTX 5090. A short live pool dry-run,
+which deliberately submitted no shares, measured 70.23 and 103.78 MH/s.
 
-| you have | take |
-|---|---|
-| Windows | `noid-gpu-1.0-windows-x64.zip` |
-| Linux | `noid-gpu-1.0-linux-x64.tar.gz` |
-| HiveOS | `noid-gpu-1.0.tar.gz` — paste its URL as the custom miner Installation URL |
+Measurements came from one dedicated card of each model. Board, clock,
+voltage, driver, cooling, and temperature can change both MH/s and watts, so
+these figures are measurements rather than guarantees.
 
-The bare `noid-gpu.exe` and `noid-gpu` are there too, for anyone who wants
-just the binary; the archives also carry the instructions, and a `.exe` inside
-a zip is far less likely to be blocked on its way to you.
+### RTX 5070 Ti improvement
+
+A controlled B-A-B comparison on the same RTX 5070 Ti measured:
+
+| Build | Median kernel rate | Median wall rate |
+|---|---:|---:|
+| Previous frozen kernel | 34.679 MH/s | 34.566 MH/s |
+| NOID-GPU 1.1.0 | **41.290 MH/s** | **41.130 MH/s** |
+| Improvement | **+19.06%** | **+18.99%** |
+
+Power was not resampled during that controlled B-A-B, so this release does
+not claim a measured 5070 Ti watt reduction versus the previous kernel.
+
+In a separate Windows field run, three RTX 5070 Ti cards delivered about
+**120 MH/s combined** while instantaneous NVIDIA-SMI readings showed roughly
+**132-180 W per card** against configured 300 W limits. This confirms that
+the cards did not need to reach their power limits to deliver the observed
+hashrate. Those snapshots are a field observation, not a controlled
+before/after energy benchmark.
+
+## Downloads
+
+| Platform | Public asset | Compatibility |
+|---|---|---|
+| Windows | noid-gpu-windows-1.1.0.zip | Windows x86-64; executable noid-gpu.exe |
+| Linux | noid-gpu-linux-1.1.0.tar.gz | Linux x86-64; Ubuntu 20.04/Focal-compatible |
+| HiveOS | noid-gpu-hiveos-1.1.0.tar.gz | HiveOS Focal/Ubuntu 20.04 custom miner |
+
+Verify every downloaded asset against SHA256SUMS.txt.
 
 ## Quick start
 
-**Windows**
+    noid-gpu --pool parano1d --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1 --gpu
+    noid-gpu --pool ariapool --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1 --gpu
 
-```
-noid-gpu.exe --gpu --coinbase o1YOURADDRESS --worker rig1
-```
+Use only your public o1... payout address. Mining never needs a seed phrase,
+private key, or wallet file.
 
-**Linux**
+The public build supports its listed built-in pools and does not accept an
+arbitrary --node destination.
 
-```
-./noid-gpu --gpu --coinbase o1YOURADDRESS --worker rig1
-```
+## What changed in the miner
 
-Your NOID address is your login and your payout address — there is no
-registration. Generate it **on your own machine** with the official Parano1d
-wallet and give the pool only the public address. Never share a seed phrase or
-a wallet file: mining does not need them, and anyone asking you for them is
-stealing from you.
+- Reduced the hot Poseidon2b path from 502 to **448 GF(2^128)
+  multiplications per permutation** (**-10.76% arithmetic work**).
+- Added a lazy most-significant-bit-first target comparison that avoids full
+  digest conversion on the normal reject path.
+- Added factorized full and partial MDS circuits and a shorter
+  Karatsuba/clmad.lo dependency chain.
+- Added a full-grid, one-nonce-per-thread kernel for pool work and the
+  deterministic offline benchmark.
+- Preserved CPU verification of every nonce returned by CUDA.
+- Replaced the verbose normal startup with a compact English status panel.
 
-## Options
+Run the real offline GPU benchmark with:
 
-| option | meaning |
-|---|---|
-| `--gpu` | use the GPU (without it, the CPU search is used) |
-| `--coinbase o1…` | **your** NOID address — required, it is who gets paid |
-| `--worker NAME` | label for this machine on the pool page |
-| `--pool NAME` | which pool to mine on (see below) |
-| `--schede 0,1` | use only these cards (default: all of them) |
-| `--a-vuoto` | search and measure, send nothing — for testing |
-| `--aiuto` | full list |
+    noid-gpu --benchmark-gpu --devices 0
 
-## Pools
+## Power limits and tuning
 
-| | dashboard | pool fee |
-|---|---|---|
-| `--pool parano1d` *(default)* | https://parano1d-pool.fun | 10% |
-| `--pool ariapool` | https://pool.ariabrain.com/noid.html | 3% |
+A power limit is a ceiling, not a consumption target. Raising it does not
+force a GPU to draw more power and will not increase hashrate when the card is
+already below the cap.
 
-Both accept your address as your login. The pool fee is charged by the pool and
-is separate from the dev fee below.
+Tune core clock and power one change at a time. Keep a setting only when the
+MH/s gain remains stable without verification errors, rejected shares,
+instability, or thermal throttling. Judge settings by both MH/s and MH/s/W.
 
-The Parano1d pool is reached through `parano1d-pool.fun`, with several fallback
-addresses behind it. That is deliberate: a pool that has to move should not
-break every miner already installed. If the miner loses the pool while running,
-after two minutes without work it goes looking for it again — you will see
-`pool moved: now mining on ...` — instead of hanging on a dead address.
+## Miner developer fee
 
-This build mines **only** on the pools in that list. To mine somewhere else, or
-against your own node, use the official `parano1d-miner`: this one is not the
-right tool for that and does not pretend to be.
+The public miner fee is a **7.5% scheduled mining-time window**: 45 seconds in
+every 600-second cycle. Switching occurs only between jobs, the full fee
+address is printed at startup, and the miner never changes a block coinbase.
+The selected pool charges its own separate fee.
 
-## HiveOS
+## Compatibility and verification
 
-`noid-gpu-1.0.tar.gz` is a custom miner package. In your flight sheet:
+- NVIDIA Ampere or newer: sm_80, sm_86, sm_89, sm_90, or sm_120.
+- NVIDIA driver 580 or newer.
+- CUDA runtime included; the CUDA toolkit is not required on the rig.
+- Linux and HiveOS binary built with a maximum required symbol of
+  GLIBC_2.30, compatible with Ubuntu 20.04/HiveOS GLIBC 2.31.
+- 113 miner/worker and Poseidon2b tests passed with zero failures
+  (90 miner/worker and 23 arithmetic tests).
+- Exact release archives passed CPU/GPU digest, target comparison, search
+  path, package identity, and checksum gates.
 
-- **Miner** → Custom → **Installation URL**: the `.tar.gz` from Releases
-- **Wallet and worker template**: your `o1…` address
-- **Pool URL**: anything containing `aria` selects AriaPool, anything else the Parano1d pool
-- **Extra config arguments**: optional, e.g. `--schede 0,1`
+## Parano1d Pool fee
 
-The worker name comes from the rig name you already set in Hive. Hashrate and
-accepted/rejected shares are reported as one figure for the whole rig, not one
-per card: the miner searches with all cards on a single counter, so a per-card
-split would be invented.
-
-Requirements: a **jammy or noble** Hive image (focal has glibc 2.31, this binary
-needs 2.34) and driver **580 or newer** (`nvidia-driver-update 580`). The CUDA
-toolkit is *not* needed — the runtime is linked into the binary.
-
----
-
-## Dev fee — 10%, disclosed
-
-This miner carries a **10% dev fee**. For 60 seconds out of every 600 seconds of
-mining it submits shares under the author's address instead of yours:
-
-```
-o1efnn3pn9c3p7etdv0addk9pply64cveujmkks7vt4rx0vjy2zufssg84zj
-```
-
-That address is dedicated to this miner and used for nothing else, so anyone can
-check on chain exactly what this software earns.
-
-What the fee does **not** do:
-
-- it never changes the coinbase of a block. Blocks always pay the pool that
-  built them, and the pool pays its miners by its own rules;
-- it never switches in the middle of a search. The change happens only between
-  jobs, so no share is ever credited to a different address than the one it was
-  requested under;
-- it is announced on **every single run**, in the header, with the address in
-  full. You do not have to trust this file — read the screen:
-
-```
-  dev fee            : 10% of mining time to o1efnn3pn9c3p7etdv0addk9…
-                       60 s out of every 600 s, switched only between jobs.
-                       It never changes the coinbase of a block.
-```
-
-The fee always goes to the Parano1d pool first, whichever pool you are mining
-on; AriaPool is used for the fee only if the first cannot be reached. It is
-decided once at startup and does not rotate.
-
-**If the fee cannot be delivered, this miner stops.** At startup it checks that
-the fee is deliverable, and if it is not, it says so and exits instead of
-mining. A miner that quietly does something different from what it printed on
-your screen is not one you should be running — and that includes this one.
-
-To watch the fee for yourself: run with `--a-vuoto` and look for the
-`dev fee window` lines. One per ten minutes, one minute long.
-
-## What you should see
-
-```
-new job ap204415-3091  height 3091  expires in 28s
-share accepted
-job ap204415-3091: 16 shares accepted  (11s)
-```
-
-`stale` means the pool moved to a new job before your share arrived: normal on
-20-second blocks, and it costs you nothing. `waiting for work` means the pool's
-node is proving the next template — also normal, and it lasts a few seconds.
-
-## Verifying the download
-
-```
-Windows:  certutil -hashfile noid-gpu.exe SHA256
-Linux:    sha256sum -c SHA256SUMS.txt
-```
-
-Compare against `SHA256SUMS.txt` in the release.
-
-## Source
-
-Only binaries are published here. If you would rather run something you can
-read, run the official `parano1d-miner` instead — that is a legitimate choice
-and this page will not argue with it.
-
-## Warranty
-
-None. Provided as is. Mining software moves money; run it only if you accept
-that risk, and only from a source you decided to trust.
+The Parano1d Pool fee is now **7.5%**, reduced from 10%. The miner developer
+fee is separate and is also 7.5% in this release.
