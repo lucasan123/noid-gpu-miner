@@ -1,14 +1,25 @@
-# NOID-GPU 1.1.0
+# NOID-GPU 1.2.0
 
 **Faster mining, less arithmetic per hash, and measured board power well
 below the configured limits.**
 
 NOID-GPU is an NVIDIA GPU miner for the Parano1d (NOID) Poseidon2b proof of
-work. Version 1.1.0 adds the optimized CUDA path, a compact English interface,
-a reduced 7.5% public miner fee, and separate Windows, Linux, and HiveOS
+work. Version 1.2.0 lowers both fees: the pool now charges **3%** and the
+miner developer fee is **5%**. Everything else is unchanged from 1.1.0, which
+brought the optimized CUDA path and separate Windows, Linux, and HiveOS
 packages.
 
 ## Release highlights
+
+- **Parano1d Pool fee lowered from 7.5% to 3%**, already live.
+- **Miner developer fee lowered from 7.5% to 5%** — 30 seconds in every
+  600-second cycle instead of 45.
+- The `--help` text no longer quotes a pool fee written by hand: it reads the
+  configured one, so it cannot fall out of date again.
+- Statistics link now points at `https://parano1d-pool.fun` instead of a bare
+  IP address.
+
+Carried over from 1.1.0:
 
 - **RTX 5070 Ti:** controlled wall-rate increased from 34.566 to
   **41.130 MH/s** (**+18.99%**).
@@ -16,8 +27,6 @@ packages.
   below the configured 450 W limit.
 - **RTX 5090:** **104.526 MH/s at 453.69 W**, leaving 46.31 W of headroom
   below the configured 500 W limit.
-- Public miner developer fee reduced from 10% to **7.5%**.
-- Parano1d Pool fee changed from 10% to **7.5%**.
 - Normal startup is now a compact NOID-GPU-WORKER panel, with English
   options, status messages, warnings, and errors.
 
@@ -46,7 +55,7 @@ A controlled B-A-B comparison on the same RTX 5070 Ti measured:
 | Build | Median kernel rate | Median wall rate |
 |---|---:|---:|
 | Previous frozen kernel | 34.679 MH/s | 34.566 MH/s |
-| NOID-GPU 1.1.0 | **41.290 MH/s** | **41.130 MH/s** |
+| NOID-GPU 1.2.0 | **41.290 MH/s** | **41.130 MH/s** |
 | Improvement | **+19.06%** | **+18.99%** |
 
 Power was not resampled during that controlled B-A-B, so this release does
@@ -63,9 +72,9 @@ before/after energy benchmark.
 
 | Platform | Public asset | Compatibility |
 |---|---|---|
-| Windows | noid-gpu-windows-1.1.0.zip | Windows x86-64; executable noid-gpu.exe |
-| Linux | noid-gpu-linux-1.1.0.tar.gz | Linux x86-64; Ubuntu 20.04/Focal-compatible |
-| HiveOS | noid-gpu-hiveos-1.1.0.tar.gz | HiveOS Focal/Ubuntu 20.04 custom miner |
+| Windows | noid-gpu-windows-1.2.0.zip | Windows x86-64; executable noid-gpu.exe |
+| Linux | noid-gpu-linux-1.2.0.tar.gz | Linux x86-64; Ubuntu 20.04/Focal-compatible |
+| HiveOS | noid-gpu-hiveos-1.2.0.tar.gz | HiveOS Focal/Ubuntu 20.04 custom miner |
 
 Verify every downloaded asset against SHA256SUMS.txt.
 
@@ -109,7 +118,7 @@ instability, or thermal throttling. Judge settings by both MH/s and MH/s/W.
 
 ## Miner developer fee
 
-The public miner fee is a **7.5% scheduled mining-time window**: 45 seconds in
+The public miner fee is a **5% scheduled mining-time window**: 30 seconds in
 every 600-second cycle. Switching occurs only between jobs, the full fee
 address is printed at startup, and the miner never changes a block coinbase.
 The selected pool charges its own separate fee.
@@ -128,5 +137,11 @@ The selected pool charges its own separate fee.
 
 ## Parano1d Pool fee
 
-The Parano1d Pool fee is now **7.5%**, reduced from 10%. The miner developer
-fee is separate and is also 7.5% in this release.
+The Parano1d Pool fee is now **3%**, reduced from 7.5%. The miner developer
+fee is separate and is 5% in this release, so mining here with this miner
+costs 8% in total.
+
+Both numbers came down after a fee discussion on the Parano1d announcement
+thread. They are announced before they take effect, and the fee address does
+not change, so what the developer fee actually collects stays checkable on
+chain either way.
