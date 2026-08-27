@@ -1,147 +1,148 @@
-# NOID-GPU 1.2.0
-
-**Faster mining, less arithmetic per hash, and measured board power well
-below the configured limits.**
+# NOID-GPU 1.3.0
 
 NOID-GPU is an NVIDIA GPU miner for the Parano1d (NOID) Poseidon2b proof of
-work. Version 1.2.0 lowers both fees: the pool now charges **3%** and the
-miner developer fee is **5%**. Everything else is unchanged from 1.1.0, which
-brought the optimized CUDA path and separate Windows, Linux, and HiveOS
-packages.
+work. Version 1.3.0 introduces the new R4 GPU path, ships separate Windows,
+Linux, and HiveOS packages, and keeps all normal user-facing text in English.
 
-## Release highlights
+## Highlights
 
-- **Parano1d Pool fee lowered from 7.5% to 3%**, already live.
-- **Miner developer fee lowered from 7.5% to 5%** — 30 seconds in every
-  600-second cycle instead of 45.
-- The `--help` text no longer quotes a pool fee written by hand: it reads the
-  configured one, so it cannot fall out of date again.
-- Statistics link now points at `https://parano1d-pool.fun` instead of a bare
-  IP address.
+- New R4 field representation and CUDA execution path.
+- Fast target handling tested through 26 bits, including the 24-bit share
+  target path.
+- Expanded CPU/GPU correctness checks and long-run stability benchmarks.
+- Public miner developer fee: **5%**.
+- Parano1d Pool fee: **3%**, charged separately by the pool.
+- NVIDIA Ampere or newer support: RTX 30, RTX 40, RTX 50, and equivalent
+  Ampere-or-newer professional cards. RTX 20 cards are not supported.
 
-Carried over from 1.1.0:
+## Measured performance
 
-- **RTX 5070 Ti:** controlled wall-rate increased from 34.566 to
-  **41.130 MH/s** (**+18.99%**).
-- **RTX 4090:** **70.492 MH/s at 280.14 W**, leaving 169.86 W of headroom
-  below the configured 450 W limit.
-- **RTX 5090:** **104.526 MH/s at 453.69 W**, leaving 46.31 W of headroom
-  below the configured 500 W limit.
-- Normal startup is now a compact NOID-GPU-WORKER panel, with English
-  options, status messages, warnings, and errors.
+| GPU / comparison | Gross wall rate | Board power | Efficiency | Result |
+|---|---:|---:|---:|---:|
+| RTX 5090, R4 | **127.096 MH/s** | **492.977 W** | **0.257813 MH/s/W** | Three 300-second runs |
+| RTX 4090, R4 | **88.951 MH/s** | **359.870 W** | **0.247175 MH/s/W** | Three 300-second runs |
+| RTX 5070 Ti, previous path | 41.315 MH/s | 162.420 W | 0.254371 MH/s/W | Controlled baseline |
+| RTX 5070 Ti, R4 | **51.337 MH/s** | **188.733 W** | **0.272009 MH/s/W** | **+24.258% MH/s; +6.934% MH/s/W** |
 
-## Performance and power
+These are gross offline benchmark results from the real GPU hashing path. The
+RTX 5090 and RTX 4090 figures were derived from three 300-second runs per GPU.
+The RTX 5070 Ti figures are a controlled old-to-R4 comparison on the same test
+setup. They are not pool-side hashrate, do not include network or fee-window
+effects, and are not performance guarantees. Card model, clocks, voltage,
+cooling, driver, and power configuration can change both MH/s and watts.
 
-### Stabilized RTX 4090 and RTX 5090 measurements
-
-| GPU | NOID-GPU wall rate | Measured board power | Configured power limit | Unused headroom | Measured efficiency |
-|---|---:|---:|---:|---:|---:|
-| RTX 4090 | **70.492 MH/s** | **280.14 W** | 450 W | **169.86 W (37.75%)** | **0.25163 MH/s/W** |
-| RTX 5090 | **104.526 MH/s** | **453.69 W** | 500 W | **46.31 W (9.26%)** | **0.23039 MH/s/W** |
-
-The table uses the longer stabilized run so that board power and temperature
-had time to settle. The normal 16,777,216-nonce batch measured 70.314 MH/s on
-the RTX 4090 and 104.298 MH/s on the RTX 5090. A short live pool dry-run,
-which deliberately submitted no shares, measured 70.23 and 103.78 MH/s.
-
-Measurements came from one dedicated card of each model. Board, clock,
-voltage, driver, cooling, and temperature can change both MH/s and watts, so
-these figures are measurements rather than guarantees.
-
-### RTX 5070 Ti improvement
-
-A controlled B-A-B comparison on the same RTX 5070 Ti measured:
-
-| Build | Median kernel rate | Median wall rate |
-|---|---:|---:|
-| Previous frozen kernel | 34.679 MH/s | 34.566 MH/s |
-| NOID-GPU 1.2.0 | **41.290 MH/s** | **41.130 MH/s** |
-| Improvement | **+19.06%** | **+18.99%** |
-
-Power was not resampled during that controlled B-A-B, so this release does
-not claim a measured 5070 Ti watt reduction versus the previous kernel.
-
-In a separate Windows field run, three RTX 5070 Ti cards delivered about
-**120 MH/s combined** while instantaneous NVIDIA-SMI readings showed roughly
-**132-180 W per card** against configured 300 W limits. This confirms that
-the cards did not need to reach their power limits to deliver the observed
-hashrate. Those snapshots are a field observation, not a controlled
-before/after energy benchmark.
+The RTX 5070 Ti comparison shows higher energy efficiency even though the R4
+path also used more board power. A power limit is only a ceiling: raising it
+does not by itself guarantee a hashrate increase.
 
 ## Downloads
 
-| Platform | Public asset | Compatibility |
-|---|---|---|
-| Windows | noid-gpu-windows-1.2.0.zip | Windows x86-64; executable noid-gpu.exe |
-| Linux | noid-gpu-linux-1.2.0.tar.gz | Linux x86-64; Ubuntu 20.04/Focal-compatible |
-| HiveOS | noid-gpu-hiveos-1.2.0.tar.gz | HiveOS Focal/Ubuntu 20.04 custom miner |
+| Platform | Asset |
+|---|---|
+| Windows | `noid-gpu-windows-1.3.0.zip` |
+| Linux | `noid-gpu-linux-1.3.0.tar.gz` |
+| HiveOS | `noid-gpu-hiveos-1.3.0.tar.gz` |
 
-Verify every downloaded asset against SHA256SUMS.txt.
+Use only assets from the v1.3.0 release and verify them against
+`SHA256SUMS.txt` before running them.
+
+## Requirements
+
+- 64-bit Windows or Linux.
+- NVIDIA Ampere or newer GPU (`sm_80`, `sm_86`, `sm_89`, `sm_90`, or
+  `sm_120`).
+- NVIDIA driver 580 or newer.
+- RTX 20, GTX 16, and GTX 10 series are not supported.
+- The CUDA toolkit is not required on the mining rig.
+
+The HiveOS package was built on the Ubuntu 20.04/Focal baseline with GLIBC
+2.31. Its highest required GLIBC symbol is `GLIBC_2.30`. The final archive
+passed extraction, layout, and permission checks; its miner executable is
+byte-for-byte identical to the Linux release executable and passed startup
+and self-test inside the Focal build environment.
 
 ## Quick start
 
-    noid-gpu --pool parano1d --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1 --gpu
-    noid-gpu --pool ariapool --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1 --gpu
+Windows PowerShell:
 
-Use only your public o1... payout address. Mining never needs a seed phrase,
-private key, or wallet file.
+```powershell
+.\noid-gpu.exe --gpu --pool parano1d --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1
+```
 
-The public build supports its listed built-in pools and does not accept an
-arbitrary --node destination.
+Linux:
 
-## What changed in the miner
+```bash
+chmod +x noid-gpu
+./noid-gpu --gpu --pool parano1d --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1
+```
 
-- Reduced the hot Poseidon2b path from 502 to **448 GF(2^128)
-  multiplications per permutation** (**-10.76% arithmetic work**).
-- Added a lazy most-significant-bit-first target comparison that avoids full
-  digest conversion on the normal reject path.
-- Added factorized full and partial MDS circuits and a shorter
-  Karatsuba/clmad.lo dependency chain.
-- Added a full-grid, one-nonce-per-thread kernel for pool work and the
-  deterministic offline benchmark.
-- Preserved CPU verification of every nonce returned by CUDA.
-- Replaced the verbose normal startup with a compact English status panel.
+Offline GPU benchmark:
 
-Run the real offline GPU benchmark with:
+```text
+noid-gpu --benchmark-gpu --devices 0
+```
 
-    noid-gpu --benchmark-gpu --devices 0
+Use only your public `o1...` payout address. Mining never requires a seed
+phrase, private key, or wallet file.
 
-## Power limits and tuning
+## Pools and custom endpoints
 
-A power limit is a ceiling, not a consumption target. Raising it does not
-force a GPU to draw more power and will not increase hashrate when the card is
-already below the cap.
+The public miner accepts the built-in pool names and custom HTTP endpoints:
 
-Tune core clock and power one change at a time. Keep a setting only when the
-MH/s gain remains stable without verification errors, rejected shares,
-instability, or thermal throttling. Judge settings by both MH/s and MH/s/W.
+```text
+noid-gpu --gpu --pool ariapool --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1
+noid-gpu --gpu --pool 192.0.2.10:3784 --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1
+noid-gpu --gpu --pool http://pool.example:3784 --coinbase o1YOUR_PUBLIC_ADDRESS --worker rig1
+```
 
-## Miner developer fee
+`--pool` therefore works with a compatible local or remote pool. The custom
+endpoint applies to the user's mining jobs; developer-fee jobs use only the
+destinations embedded in the public executable.
 
-The public miner fee is a **5% scheduled mining-time window**: 30 seconds in
-every 600-second cycle. Switching occurs only between jobs, the full fee
-address is printed at startup, and the miner never changes a block coinbase.
-The selected pool charges its own separate fee.
+## HiveOS
 
-## Compatibility and verification
+Select **Custom miner** in the Flight Sheet and use:
 
-- NVIDIA Ampere or newer: sm_80, sm_86, sm_89, sm_90, or sm_120.
-- NVIDIA driver 580 or newer.
-- CUDA runtime included; the CUDA toolkit is not required on the rig.
-- Linux and HiveOS binary built with a maximum required symbol of
-  GLIBC_2.30, compatible with Ubuntu 20.04/HiveOS GLIBC 2.31.
-- 113 miner/worker and Poseidon2b tests passed with zero failures
-  (90 miner/worker and 23 arithmetic tests).
-- Exact release archives passed CPU/GPU digest, target comparison, search
-  path, package identity, and checksum gates.
+```text
+Miner name:        noid-gpu-hiveos
+Installation URL: URL of noid-gpu-hiveos-1.3.0.tar.gz
+Hash algorithm:   poseidon2b
+Pool URL:         pool host:port, HTTP URL, parano1d, or ariapool
+Wallet/template:  your public o1... payout address
+```
 
-## Parano1d Pool fee
+The HiveOS adapter obtains the worker name from HiveOS. Extra miner arguments
+can be placed in the Flight Sheet's custom configuration field.
 
-The Parano1d Pool fee is now **3%**, reduced from 7.5%. The miner developer
-fee is separate and is 5% in this release, so mining here with this miner
-costs 8% in total.
+## Fees
 
-Both numbers came down after a fee discussion on the Parano1d announcement
-thread. They are announced before they take effect, and the fee address does
-not change, so what the developer fee actually collects stays checkable on
-chain either way.
+The public miner developer fee is a **5% scheduled mining-time window**: 30
+seconds in each 600-second cycle. Switching occurs only between jobs, so a
+short observation can vary around 5%. The selected pool charges its own fee
+separately. The Parano1d Pool fee is **3%**.
+
+## Verify the download
+
+Linux:
+
+```bash
+sha256sum -c SHA256SUMS.txt
+```
+
+Windows PowerShell:
+
+```powershell
+Get-FileHash .\noid-gpu-windows-1.3.0.zip -Algorithm SHA256
+```
+
+Compare the Windows result with the matching line in `SHA256SUMS.txt`.
+
+## What changed internally
+
+- Added the R4-specific field representation and optimized GPU path.
+- Kept the common share-target path fast through 26 bits, including 24-bit
+  targets.
+- Retained independent CPU verification of GPU results before submission.
+- Added correctness coverage for digest, target comparison, and nonce-search
+  behavior across the optimized paths.
+- Preserved multi-GPU operation and explicit device selection.
