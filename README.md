@@ -1,65 +1,74 @@
-# NOID-GPU 1.3.0
+# NOID-GPU 1.4.0
 
-NOID-GPU is an NVIDIA GPU miner for the Parano1d (NOID) Poseidon2b proof of
-work. Version 1.3.0 introduces the new R4 GPU path, ships separate Windows,
-Linux, and HiveOS packages, and keeps all normal user-facing text in English.
+NOID-GPU is an NVIDIA GPU miner for Parano1d (NOID). Version 1.4.0 does the
+heavy arithmetic with a lookup table kept in fast on-chip memory instead of
+computing it every time.
 
 ## Highlights
 
-- New R4 field representation and CUDA execution path.
-- Fast target handling tested through 26 bits, including the 24-bit share
-  target path.
-- Expanded CPU/GPU correctness checks and long-run stability benchmarks.
-- Public miner developer fee: **5%**.
-- Parano1d Pool fee: **3%**, charged separately by the pool.
-- NVIDIA Ampere or newer support: RTX 30, RTX 40, RTX 50, and equivalent
-  Ampere-or-newer professional cards. RTX 20 cards are not supported.
+- **Between 40% and 57% more hashes per second at the same wattage** on
+  RTX 30 and newer. On an RTX 5070 Ti, both releases on the same card:
+  50.5 -> 79.3 MH/s at 250 W.
+- **RTX 20 cards are now supported.** They use the version that is faster on
+  that generation, chosen automatically; nothing to configure.
+- **One download for every card**, from RTX 20 to RTX 50. Earlier plans were
+  to split it in two; that turned out not to be needed.
+- The mining path was run against the live pool and produced accepted shares
+  — something no previous release had verified end to end.
+- Public miner developer fee: **5%**. Parano1d Pool fee: **3%**, charged
+  separately by the pool. Neither changed.
 
 ## Measured performance
 
-| GPU / comparison | Gross wall rate | Board power | Efficiency | Result |
-|---|---:|---:|---:|---:|
-| RTX 5090, R4 | **127.096 MH/s** | **492.977 W** | **0.257813 MH/s/W** | Three 300-second runs |
-| RTX 4090, R4 | **88.951 MH/s** | **359.870 W** | **0.247175 MH/s/W** | Three 300-second runs |
-| RTX 5070 Ti, previous path | 41.315 MH/s | 162.420 W | 0.254371 MH/s/W | Controlled baseline |
-| RTX 5070 Ti, R4 | **51.337 MH/s** | **188.733 W** | **0.272009 MH/s/W** | **+24.258% MH/s; +6.934% MH/s/W** |
+Each figure is the middle value of a run lasting about ten minutes, with the
+card already warm, on 28 August 2026.
 
-These are gross offline benchmark results from the real GPU hashing path. The
-RTX 5090 and RTX 4090 figures were derived from three 300-second runs per GPU.
-The RTX 5070 Ti figures are a controlled old-to-R4 comparison on the same test
-setup. They are not pool-side hashrate, do not include network or fee-window
-effects, and are not performance guarantees. Card model, clocks, voltage,
-cooling, driver, and power configuration can change both MH/s and watts.
+| GPU | Power cap | Actual rate |
+|---|---:|---:|
+| RTX 5090 | 600 W | **190.630 MH/s** |
+| RTX 4090 | 350 W | **125.203 MH/s** |
+| RTX 5070 Ti | 250 W | **78.594 MH/s** |
+| RTX 3090 | 280 W | **54.428 MH/s** |
+| RTX 2080 Ti | 250 W | **5.214 MH/s** |
 
-The RTX 5070 Ti comparison shows higher energy efficiency even though the R4
-path also used more board power. A power limit is only a ceiling: raising it
-does not by itself guarantee a hashrate increase.
+**Always read a rate together with its power cap.** These four cards ran at
+different caps and cannot be compared with each other. A 4090 limited to
+350 W is a common setup; a 4090 allowed 450 W will report more. Neither is
+wrong, and a rate quoted without its cap means nothing.
+
+These are offline measurements, not pool-side rates and not guarantees. Card
+model, clocks, voltage, cooling, driver and power settings all change both
+the rate and the watts.
+
+Full detail, including what was *not* tested, is in `RELEASE-NOTES.md`.
 
 ## Downloads
 
 | Platform | Asset |
 |---|---|
-| Windows | `noid-gpu-windows-1.3.0.zip` |
-| Linux | `noid-gpu-linux-1.3.0.tar.gz` |
-| HiveOS | `noid-gpu-hiveos-1.3.0.tar.gz` |
+| Windows | `noid-gpu-windows-1.4.0.zip` |
+| Linux | `noid-gpu-linux-1.4.0.tar.gz` |
+| HiveOS | `noid-gpu-hiveos-1.4.0.tar.gz` |
 
-Use only assets from the v1.3.0 release and verify them against
+Use only files from the v1.4.0 release, and check them against
 `SHA256SUMS.txt` before running them.
 
 ## Requirements
 
 - 64-bit Windows or Linux.
-- NVIDIA Ampere or newer GPU (`sm_80`, `sm_86`, `sm_89`, `sm_90`, or
-  `sm_120`).
+- An NVIDIA card from the RTX 20 series onwards: RTX 20, RTX 30, RTX 40,
+  RTX 50, or the equivalent professional cards.
 - NVIDIA driver 580 or newer.
-- RTX 20, GTX 16, and GTX 10 series are not supported.
-- The CUDA toolkit is not required on the mining rig.
+- Everything else the miner needs is inside the download; the CUDA toolkit
+  is not required on the mining rig.
 
-The HiveOS package was built on the Ubuntu 20.04/Focal baseline with GLIBC
-2.31. Its highest required GLIBC symbol is `GLIBC_2.30`. The final archive
-passed extraction, layout, and permission checks; its miner executable is
-byte-for-byte identical to the Linux release executable and passed startup
-and self-test inside the Focal build environment.
+GTX 10 series and older will not run this miner: they are too old for the
+instructions it uses. GTX 16 cards are the same generation as the RTX 20 and
+should work, but none has been tested.
+
+The Linux and HiveOS builds run on distributions with GLIBC 2.30 or newer,
+which covers everything from Ubuntu 20.04 onwards. Both packages contain the
+same executable, byte for byte.
 
 ## Quick start
 
@@ -105,7 +114,7 @@ Select **Custom miner** in the Flight Sheet and use:
 
 ```text
 Miner name:        noid-gpu-hiveos
-Installation URL: URL of noid-gpu-hiveos-1.3.0.tar.gz
+Installation URL: URL of noid-gpu-hiveos-1.4.0.tar.gz
 Hash algorithm:   poseidon2b
 Pool URL:         pool host:port, HTTP URL, parano1d, or ariapool
 Wallet/template:  your public o1... payout address
@@ -132,17 +141,19 @@ sha256sum -c SHA256SUMS.txt
 Windows PowerShell:
 
 ```powershell
-Get-FileHash .\noid-gpu-windows-1.3.0.zip -Algorithm SHA256
+Get-FileHash .\noid-gpu-windows-1.4.0.zip -Algorithm SHA256
 ```
 
 Compare the Windows result with the matching line in `SHA256SUMS.txt`.
 
-## What changed internally
+## What changed under the hood
 
-- Added the R4-specific field representation and optimized GPU path.
-- Kept the common share-target path fast through 26 bits, including 24-bit
-  targets.
-- Retained independent CPU verification of GPU results before submission.
-- Added correctness coverage for digest, target comparison, and nonce-search
-  behavior across the optimized paths.
-- Preserved multi-GPU operation and explicit device selection.
+- The heavy arithmetic is now a lookup table held in fast on-chip memory,
+  instead of being recomputed for every attempt.
+- The path used for real mining — which is not the one the offline test
+  exercises — was run against the live pool for the first time, and its
+  shares were accepted.
+- Every card in the release is built in ahead of time, so none of them has
+  to prepare itself the first time you start the miner.
+- Unchanged: the processor still re-checks every result before it is sent,
+  multiple cards still work, and you can still pick specific ones.
